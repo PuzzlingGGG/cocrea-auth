@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cocrea auth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #2c2f33;
+            color: #ffffff;
+        }
+        h2 {
+            color: #ffffff;
+        }
+        #codeSection {
+            background-color: #23272a;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+        #codeSection p {
+            margin: 10px 0;
+            color: #ffffff;
+        }
+        button {
+            background-color: #7289da;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #5b6eae;
+        }
+        .dynamic-color {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <h2>auth for <span id="authFor" class="dynamic-color">cocrea</span></h2>
+    <div id="codeSection" class="dynamic-color">
+        <p>loading...</p>
+    </div>
+    <button onclick="generateCode()">regenerate code</button>
+    <button id="checkCode" style="display:none;">check code</button>
+    <script>
+        function getURLParameter(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
+        function generateCode() {
+            fetch('/generate_code')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('codeSection').innerHTML = `<p>${data.message}</p><p>code: <strong>${data.code}</strong></p>`;
+                    document.getElementById('checkCode').style.display = 'inline';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        document.getElementById('checkCode').addEventListener('click', function() {
+            const code = document.getElementById('codeSection').innerText.split('code: ')[1].trim();
+            fetch('/verify_code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({code: code}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    const returnURL = getURLParameter('ReturnURL');
+                    if(returnURL) {
+                        const queryParams = `?id=${data.id}&username=${data.username}`;
+                        window.location.href = returnURL + queryParams;
+                    } else {
+                        alert('auth successful, but no return url specified.');
+                    }
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('error:', error);
+            });
+        });
+
+        window.onload = function() {
+            const authFor = getURLParameter('authFor') || 'cocrea';
+            const color = getURLParameter('color') || '#ffffff';
+
+            document.getElementById('authFor').textContent = authFor;
+            document.querySelector('.dynamic-color').style.color = color;
+
+            generateCode();
+        };
+    </script>
+</body>
+</html>
