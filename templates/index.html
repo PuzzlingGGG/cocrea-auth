@@ -77,7 +77,7 @@
             .then(response => response.json())
             .then(data => {
                 if(data.status === 'success') {
-                    const returnURL = getURLParameter('ReturnURL');
+                    const returnURL = getURLParameter('return');
                     if(returnURL) {
                         const queryParams = `?id=${data.id}&username=${data.username}`;
                         window.location.href = returnURL + queryParams;
